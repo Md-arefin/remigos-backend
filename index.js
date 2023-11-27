@@ -37,6 +37,20 @@ app.get('/products', async (req, res) => {
   }
 });
 
+app.get('/product/:id', async (req, res) => {
+  const productId = req.params.id;
+
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT * FROM products WHERE id = $1', [productId]);
+    res.send(result.rows[0]);
+    client.release();
+  } catch (error) {
+    console.error('Error fetching data by id', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 app.post('/insert', async (req, res) => {
   const { id, category, name, seller, price, stock, ratings, img, shipping, quantity } = req.body;
 
