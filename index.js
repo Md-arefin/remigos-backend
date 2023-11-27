@@ -25,6 +25,36 @@ app.get('/', (req, res) => {
   res.send('Hello, this is your Express server!');
 });
 
+app.get('/products', async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT * FROM products'); ;
+    client.release();
+    res.send(result.rows);
+  } catch (error) {
+    console.error('Error fetching data', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.post('/insert', async (req, res) => {
+  const { id, category, name, seller, price, stock, ratings, img, shipping, quantity } = req.body;
+
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'INSERT INTO products(id, category, name, seller, price, stock, ratings, img, shipping, quantity) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+      [id, category, name, seller, price, stock, ratings, img, shipping, quantity]
+    );
+
+    const insertedData = result.rows[0];
+    client.release();
+    res.status(201).json({ message: 'Data inserted successfully', data: insertedData });
+  } catch (error) {
+    console.error('Error inserting data', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 // Start the server
 app.listen(port, () => {
